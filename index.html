@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Calculator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@300;400;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #ffffff;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    /* ── CALCULATOR SHELL ── */
+    .calc-shell {
+      width: 322px;
+      background: #202020;
+      border-radius: 12px;
+      box-shadow:
+        0 32px 80px rgba(0,0,0,0.7),
+        0 0 0 1px rgba(255,255,255,0.08),
+        inset 0 1px 0 rgba(255,255,255,0.12);
+      overflow: hidden;
+      user-select: none;
+    }
+
+    /* ── TITLE BAR ── */
+    .title-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px 8px;
+      background: #202020;
+    }
+    .title-bar span {
+      font-size: 13px;
+      font-weight: 600;
+      color: #e0e0e0;
+      letter-spacing: 0.02em;
+    }
+    .win-controls { display: flex; gap: 4px; }
+    .win-btn {
+      width: 28px; height: 28px;
+      border: none; border-radius: 6px;
+      background: transparent;
+      color: #c0c0c0;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.15s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .win-btn:hover { background: rgba(255,255,255,0.1); }
+    .win-btn.close:hover { background: #c42b1c; color: #fff; }
+
+    /* ── DISPLAY ── */
+    .display {
+      padding: 16px 16px 8px;
+    }
+    .history-line {
+      height: 20px;
+      text-align: right;
+      font-size: 13px;
+      color: #888;
+      letter-spacing: 0.01em;
+      font-family: 'JetBrains Mono', monospace;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .main-display {
+      text-align: right;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 48px;
+      font-weight: 300;
+      color: #ffffff;
+      letter-spacing: -1px;
+      line-height: 1.1;
+      min-height: 60px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .main-display.small { font-size: 32px; }
+    .main-display.xsmall { font-size: 22px; }
+
+    /* ── MEMORY ROW ── */
+    .mem-row {
+      display: flex;
+      gap: 2px;
+      padding: 8px 10px 6px;
+    }
+    .mem-btn {
+      flex: 1;
+      height: 32px;
+      background: transparent;
+      border: none;
+      border-radius: 4px;
+      color: #bbb;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.12s, color 0.12s;
+    }
+    .mem-btn:hover { background: rgba(255,255,255,0.08); color: #fff; }
+    .mem-btn:active { background: rgba(255,255,255,0.14); }
+    .mem-btn:disabled { color: #444; cursor: default; }
+    .mem-btn:disabled:hover { background: transparent; }
+
+    /* ── BUTTON GRID ── */
+    .btn-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      padding: 4px 10px 14px;
+    }
+
+    button.calc-btn {
+      height: 56px;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: 400;
+      cursor: pointer;
+      transition: background 0.1s, transform 0.08s, box-shadow 0.1s;
+      position: relative;
+      overflow: hidden;
+    }
+    button.calc-btn:active {
+      transform: scale(0.96);
+    }
+
+    /* Standard buttons */
+    .btn-std {
+      background: #2d2d2d;
+      color: #e0e0e0;
+    }
+    .btn-std:hover { background: #3a3a3a; }
+    .btn-std:active { background: #444; }
+
+    /* Operator buttons */
+    .btn-op {
+      background: #2d2d2d;
+      color: #e0e0e0;
+    }
+    .btn-op:hover { background: #3a3a3a; }
+    .btn-op:active { background: #444; }
+
+    /* Function buttons (top row) */
+    .btn-fn {
+      background: #1a1a1a;
+      color: #c0c0c0;
+      font-size: 14px;
+    }
+    .btn-fn:hover { background: #282828; }
+    .btn-fn:active { background: #333; }
+
+    /* Equals */
+    .btn-eq {
+      background: #0078d4;
+      color: #ffffff;
+      font-size: 20px;
+    }
+    .btn-eq:hover { background: #1a8ce8; }
+    .btn-eq:active { background: #006abf; }
+
+    /* Special A / B buttons */
+    .btn-a {
+      background: linear-gradient(135deg, #1e3a5f 0%, #0d2b48 100%);
+      color: #60b0ff;
+      font-size: 18px;
+      font-weight: 700;
+      border: 1px solid rgba(0,120,215,0.35);
+      box-shadow: 0 0 10px rgba(0,120,215,0.15);
+    }
+    .btn-a:hover { background: linear-gradient(135deg, #274d78 0%, #1a3d5e 100%); box-shadow: 0 0 14px rgba(0,120,215,0.3); }
+
+    .btn-b {
+      background: linear-gradient(135deg, #1e3a30 0%, #0d2820 100%);
+      color: #50d890;
+      font-size: 18px;
+      font-weight: 700;
+      border: 1px solid rgba(0,200,100,0.25);
+      box-shadow: 0 0 10px rgba(0,200,100,0.1);
+    }
+    .btn-b:hover { background: linear-gradient(135deg, #274f3e 0%, #1a3d2c 100%); box-shadow: 0 0 14px rgba(0,200,100,0.25); }
+
+    /* ── WINDOW STATES ── */
+    .calc-shell.minimized {
+      display: none;
+    }
+    .calc-shell.maximized {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      border-radius: 0;
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    .calc-shell.maximized .btn-grid,
+    .calc-shell.maximized .mem-row {
+      width: 322px;
+    }
+    .taskbar {
+      display: none;
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #202020;
+      border-radius: 10px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.1);
+      padding: 8px 16px;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      z-index: 200;
+      transition: background 0.15s;
+    }
+    .taskbar:hover { background: #2d2d2d; }
+    .taskbar.visible { display: flex; }
+    .taskbar-icon { font-size: 18px; }
+    .taskbar-label { font-size: 13px; color: #c0c0c0; font-weight: 500; }
+
+    .ripple {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      transform: scale(0);
+      animation: ripple-anim 0.4s linear;
+      pointer-events: none;
+    }
+    @keyframes ripple-anim {
+      to { transform: scale(4); opacity: 0; }
+    }
+
+    /* ── MODAL OVERLAY ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(6px);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.visible {
+      display: flex;
+      animation: fadeIn 0.2s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .modal {
+      background: #252525;
+      border-radius: 14px;
+      padding: 0;
+      width: 340px;
+      box-shadow:
+        0 24px 60px rgba(0,0,0,0.8),
+        0 0 0 1px rgba(255,255,255,0.1);
+      overflow: hidden;
+      animation: slideUp 0.22s ease;
+    }
+    @keyframes slideUp { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 20px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+    .modal-header h2 {
+      font-size: 15px;
+      font-weight: 600;
+      color: #e8e8e8;
+    }
+    .modal-close {
+      width: 30px; height: 30px;
+      background: transparent; border: none; border-radius: 6px;
+      color: #888; font-size: 18px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s;
+    }
+    .modal-close:hover { background: #c42b1c; color: #fff; }
+
+    .modal-body { padding: 20px; }
+
+    /* Developer modal */
+    .dev-avatar {
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #0078d4, #004b87);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px;
+      margin: 0 auto 16px;
+      box-shadow: 0 4px 20px rgba(0,120,212,0.4);
+    }
+    .dev-name {
+      text-align: center;
+      font-size: 18px; font-weight: 600;
+      color: #e8e8e8; margin-bottom: 4px;
+    }
+    .dev-role {
+      text-align: center;
+      font-size: 13px; color: #0078d4;
+      margin-bottom: 18px;
+      font-weight: 500;
+    }
+    .info-row {
+      display: flex; align-items: center;
+      gap: 10px; padding: 10px 12px;
+      background: rgba(255,255,255,0.04);
+      border-radius: 8px; margin-bottom: 6px;
+    }
+    .info-icon { font-size: 16px; width: 20px; text-align: center; }
+    .info-text { font-size: 13px; color: #c0c0c0; }
+    .info-text strong { color: #e0e0e0; }
+
+    /* App modal */
+    .app-icon {
+      width: 72px; height: 72px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #0078d4, #005a9e);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 36px;
+      margin: 0 auto 16px;
+      box-shadow: 0 4px 20px rgba(0,120,212,0.4);
+    }
+    .app-title {
+      text-align: center;
+      font-size: 20px; font-weight: 700;
+      color: #e8e8e8; margin-bottom: 4px;
+    }
+    .app-version {
+      text-align: center;
+      font-size: 12px; color: #666;
+      margin-bottom: 18px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .app-desc {
+      font-size: 13px; color: #999;
+      text-align: center;
+      line-height: 1.6;
+      margin-bottom: 18px;
+      padding: 0 8px;
+    }
+    .tag-row {
+      display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;
+      margin-bottom: 16px;
+    }
+    .tag {
+      padding: 3px 10px;
+      background: rgba(0,120,212,0.15);
+      border: 1px solid rgba(0,120,212,0.3);
+      border-radius: 20px;
+      font-size: 11px; color: #60b0ff;
+      font-weight: 500;
+    }
+    .divider { height: 1px; background: rgba(255,255,255,0.06); margin: 14px 0; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
+  </style>
+</head>
+<body>
+
+<!-- ═══ CALCULATOR ═══ -->
+<div class="calc-shell">
+  <!-- Title bar -->
+  <div class="title-bar">
+    <span>Calculator</span>
+    <div class="win-controls">
+      <button class="win-btn" title="Minimize" onclick="minimizeCalc()">&#8722;</button>
+      <button class="win-btn" id="maxBtn" title="Maximize" onclick="maximizeCalc()">&#9633;</button>
+      <button class="win-btn close" title="Close" onclick="closeCalc()">&#10005;</button>
+    </div>
+  </div>
+
+  <!-- Display -->
+  <div class="display">
+    <div class="history-line" id="history"></div>
+    <div class="main-display" id="mainDisplay">0</div>
+  </div>
+
+  <!-- Memory row -->
+  <div class="mem-row">
+    <button class="mem-btn" id="mc"  onclick="memClear()"  disabled>MC</button>
+    <button class="mem-btn" id="mr"  onclick="memRecall()" disabled>MR</button>
+    <button class="mem-btn" id="mplus"  onclick="memAdd()">M+</button>
+    <button class="mem-btn" id="mminus" onclick="memSub()">M−</button>
+    <button class="mem-btn" id="ms"  onclick="memStore()">MS</button>
+  </div>
+
+  <!-- Button grid -->
+  <div class="btn-grid">
+    <!-- Row 1: special -->
+    <button class="calc-btn btn-a" onclick="showModal('dev')" title="About Developer">A</button>
+    <button class="calc-btn btn-b" onclick="showModal('app')" title="About Application">B</button>
+    <button class="calc-btn btn-fn" onclick="calcPercent()">%</button>
+    <button class="calc-btn btn-fn" onclick="clearEntry()">CE</button>
+
+    <!-- Row 2 -->
+    <button class="calc-btn btn-fn" onclick="clearAll()">C</button>
+    <button class="calc-btn btn-fn" onclick="backspace()">⌫</button>
+    <button class="calc-btn btn-fn" onclick="fraction()">¹⁄ₓ</button>
+    <button class="calc-btn btn-op" onclick="setOp('/')">÷</button>
+
+    <!-- Row 3 -->
+    <button class="calc-btn btn-std" onclick="inputDigit('7')">7</button>
+    <button class="calc-btn btn-std" onclick="inputDigit('8')">8</button>
+    <button class="calc-btn btn-std" onclick="inputDigit('9')">9</button>
+    <button class="calc-btn btn-op" onclick="setOp('*')">×</button>
+
+    <!-- Row 4 -->
+    <button class="calc-btn btn-std" onclick="inputDigit('4')">4</button>
+    <button class="calc-btn btn-std" onclick="inputDigit('5')">5</button>
+    <button class="calc-btn btn-std" onclick="inputDigit('6')">6</button>
+    <button class="calc-btn btn-op" onclick="setOp('-')">−</button>
+
+    <!-- Row 5 -->
+    <button class="calc-btn btn-std" onclick="inputDigit('1')">1</button>
+    <button class="calc-btn btn-std" onclick="inputDigit('2')">2</button>
+    <button class="calc-btn btn-std" onclick="inputDigit('3')">3</button>
+    <button class="calc-btn btn-op" onclick="setOp('+')">+</button>
+
+    <!-- Row 6 -->
+    <button class="calc-btn btn-fn" onclick="toggleSign()">+/−</button>
+    <button class="calc-btn btn-std" onclick="inputDigit('0')">0</button>
+    <button class="calc-btn btn-std" onclick="inputDecimal()">.</button>
+    <button class="calc-btn btn-eq" onclick="calculate()">=</button>
+  </div>
+</div>
+
+<!-- Taskbar pill (shown when minimized) -->
+<div class="taskbar" id="taskbar" onclick="restoreCalc()" title="Restore Calculator">
+  <span class="taskbar-icon">🧮</span>
+  <span class="taskbar-label">Calculator</span>
+</div>
+
+
+<!-- ═══ DEVELOPER MODAL ═══ -->
+<div class="modal-overlay" id="devModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>About the Developer</h2>
+      <button class="modal-close" onclick="closeModal('dev')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="dev-avatar">👨‍💻</div>
+      <div class="dev-name">Amiel Jhay V. Mangguera</div>
+      <div class="dev-role">Software Developer</div>
+
+      <div class="info-row">
+        <span class="info-icon">🎓</span>
+        <span class="info-text"><strong>Education:</strong> BS Information Technology</span>
+      </div>
+      <div class="info-row">
+        <span class="info-icon">📧</span>
+        <span class="info-text"><strong>Email:</strong> manguerraamieljhayv@gmail.com</span>
+      </div>
+      <div class="info-row">
+        <span class="info-icon">🌐</span>
+        <span class="info-text"><strong>GitHub:</strong> https://github.com/manguerraamieljhayv</span>
+      </div>
+      <div class="info-row">
+        <span class="info-icon">📍</span>
+        <span class="info-text"><strong>Location:</strong> Buug, Zamboanga Sibugay</span>
+      </div>
+      <div class="info-row">
+        <span class="info-icon">💼</span>
+        <span class="info-text"><strong>Specialization:</strong> Frontend &amp; Web Applications</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══ APP MODAL ═══ -->
+<div class="modal-overlay" id="appModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>About the Application</h2>
+      <button class="modal-close" onclick="closeModal('app')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="app-icon">🧮</div>
+      <div class="app-title">Calculator</div>
+      <div class="app-version">Version 1.0.0 &nbsp;·&nbsp; Build 2026.04</div>
+      <div class="app-desc">
+        A faithful recreation of the Windows Calculator with a modern dark interface.
+        Supports standard arithmetic, memory functions, and keyboard input.
+      </div>
+      <div class="tag-row">
+        <span class="tag">Standard Mode</span>
+        <span class="tag">Memory Functions</span>
+        <span class="tag">Keyboard Support</span>
+        <span class="tag">Dark UI</span>
+      </div>
+      <div class="divider"></div>
+      <div class="info-row">
+        <span class="info-icon">📅</span>
+        <span class="info-text"><strong>Released:</strong> April 2026</span>
+      </div>
+      <div class="info-row">
+        <span class="info-icon">⚙️</span>
+        <span class="info-text"><strong>Built with:</strong> HTML5, CSS3, Vanilla JavaScript</span>
+      </div>
+      <div class="info-row">
+        <span class="info-icon">📜</span>
+        <span class="info-text"><strong>License:</strong> MIT Open Source</span>
+      </div>
+      <div class="info-row">
+        <span class="info-icon">🛡️</span>
+        <span class="info-text"><strong>Platform:</strong> Any modern web browser</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+  /* ── State ── */
+  let display     = '0';
+  let prevVal     = null;
+  let operator    = null;
+  let waitingNext = false;
+  let justEqualed = false;
+  let memory      = 0;
+
+  const mainEl    = document.getElementById('mainDisplay');
+  const histEl    = document.getElementById('history');
+
+  /* ── Display ── */
+  function setDisplay(val) {
+    display = String(val);
+    mainEl.textContent = display;
+    const len = display.replace('-','').length;
+    mainEl.className = 'main-display' +
+      (len > 15 ? ' xsmall' : len > 10 ? ' small' : '');
+  }
+
+  /* ── Digit input ── */
+  function inputDigit(d) {
+    if (waitingNext) { setDisplay(d); waitingNext = false; }
+    else if (display === '0' || justEqualed) { setDisplay(d); }
+    else { setDisplay(display.length < 16 ? display + d : display); }
+    justEqualed = false;
+  }
+
+  function inputDecimal() {
+    if (waitingNext) { setDisplay('0.'); waitingNext = false; return; }
+    if (!display.includes('.')) setDisplay(display + '.');
+    justEqualed = false;
+  }
+
+  function toggleSign() {
+    if (display === '0') return;
+    setDisplay(display.startsWith('-') ? display.slice(1) : '-' + display);
+  }
+
+  /* ── Operators ── */
+  function setOp(op) {
+    const cur = parseFloat(display);
+    if (prevVal !== null && !waitingNext) {
+      const result = compute(prevVal, cur, operator);
+      setDisplay(fmt(result));
+      prevVal = result;
+    } else {
+      prevVal = cur;
+    }
+    operator    = op;
+    waitingNext = true;
+    justEqualed = false;
+    histEl.textContent = `${fmt(prevVal)} ${opSym(op)}`;
+  }
+
+  function calculate() {
+    if (operator === null || prevVal === null) return;
+    const cur    = parseFloat(display);
+    histEl.textContent = `${fmt(prevVal)} ${opSym(operator)} ${fmt(cur)} =`;
+    const result = compute(prevVal, cur, operator);
+    setDisplay(fmt(result));
+    prevVal     = null;
+    operator    = null;
+    waitingNext = false;
+    justEqualed = true;
+  }
+
+  function compute(a, b, op) {
+    switch(op) {
+      case '+': return a + b;
+      case '-': return a - b;
+      case '*': return a * b;
+      case '/': return b === 0 ? 'Cannot divide by zero' : a / b;
+    }
+  }
+
+  function opSym(op) {
+    return { '+':'+', '-':'−', '*':'×', '/':'÷' }[op] || op;
+  }
+
+  function fmt(n) {
+    if (typeof n !== 'number') return n;
+    const s = parseFloat(n.toPrecision(12));
+    return String(s);
+  }
+
+  /* ── Functions ── */
+  function clearAll()   { setDisplay('0'); prevVal = null; operator = null; waitingNext = false; justEqualed = false; histEl.textContent = ''; }
+  function clearEntry() { setDisplay('0'); }
+  function backspace()  { if (display.length > 1 && display !== 'Cannot divide by zero') setDisplay(display.slice(0,-1)); else setDisplay('0'); }
+
+  function calcPercent() {
+    const v = parseFloat(display);
+    setDisplay(fmt(prevVal !== null ? prevVal * v / 100 : v / 100));
+  }
+
+  function fraction() {
+    const v = parseFloat(display);
+    if (v === 0) { setDisplay('Cannot divide by zero'); return; }
+    setDisplay(fmt(1 / v));
+  }
+
+  /* ── Memory ── */
+  function memStore()  { memory = parseFloat(display); updateMemBtns(true); }
+  function memRecall() { setDisplay(fmt(memory)); waitingNext = false; }
+  function memClear()  { memory = 0; updateMemBtns(false); }
+  function memAdd()    { memory += parseFloat(display); updateMemBtns(true); }
+  function memSub()    { memory -= parseFloat(display); updateMemBtns(true); }
+  function updateMemBtns(has) {
+    document.getElementById('mc').disabled = !has;
+    document.getElementById('mr').disabled = !has;
+  }
+
+  /* ── Keyboard ── */
+  document.addEventListener('keydown', e => {
+    if (e.key >= '0' && e.key <= '9') inputDigit(e.key);
+    else if (e.key === '.') inputDecimal();
+    else if (e.key === '+') setOp('+');
+    else if (e.key === '-') setOp('-');
+    else if (e.key === '*') setOp('*');
+    else if (e.key === '/') { e.preventDefault(); setOp('/'); }
+    else if (e.key === 'Enter' || e.key === '=') calculate();
+    else if (e.key === 'Backspace') backspace();
+    else if (e.key === 'Escape') clearAll();
+    else if (e.key === '%') calcPercent();
+  });
+
+  /* ── Ripple ── */
+  document.querySelectorAll('.calc-btn').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      const r = document.createElement('span');
+      r.className = 'ripple';
+      const rect = this.getBoundingClientRect();
+      r.style.width = r.style.height = Math.max(rect.width, rect.height) + 'px';
+      r.style.left = e.clientX - rect.left - parseInt(r.style.width)/2 + 'px';
+      r.style.top  = e.clientY - rect.top  - parseInt(r.style.height)/2 + 'px';
+      this.appendChild(r);
+      setTimeout(() => r.remove(), 400);
+    });
+  });
+
+  /* ── Window Controls ── */
+  const shell   = document.querySelector('.calc-shell');
+  const taskbar = document.getElementById('taskbar');
+  const maxBtn  = document.getElementById('maxBtn');
+  let isMaximized = false;
+
+  function minimizeCalc() {
+    shell.classList.add('minimized');
+    taskbar.classList.add('visible');
+  }
+
+  function restoreCalc() {
+    shell.classList.remove('minimized');
+    taskbar.classList.remove('visible');
+  }
+
+  function maximizeCalc() {
+    if (!isMaximized) {
+      shell.classList.add('maximized');
+      maxBtn.innerHTML = '&#10697;'; // restore icon
+      maxBtn.title = 'Restore';
+      isMaximized = true;
+    } else {
+      shell.classList.remove('maximized');
+      maxBtn.innerHTML = '&#9633;';
+      maxBtn.title = 'Maximize';
+      isMaximized = false;
+    }
+  }
+
+  function closeCalc() {
+    shell.style.transition = 'opacity 0.2s, transform 0.2s';
+    shell.style.opacity = '0';
+    shell.style.transform = 'scale(0.95)';
+    taskbar.classList.remove('visible');
+    setTimeout(() => {
+      shell.style.display = 'none';
+    }, 200);
+  }
+
+
+  function showModal(type) {
+    document.getElementById(type === 'dev' ? 'devModal' : 'appModal').classList.add('visible');
+  }
+  function closeModal(type) {
+    document.getElementById(type === 'dev' ? 'devModal' : 'appModal').classList.remove('visible');
+  }
+  document.querySelectorAll('.modal-overlay').forEach(el => {
+    el.addEventListener('click', function(e) {
+      if (e.target === this) this.classList.remove('visible');
+    });
+  });
+</script>
+</body>
+</html>
